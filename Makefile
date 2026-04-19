@@ -1,22 +1,22 @@
-.PHONY: test-backend lint-backend run-backend lint-frontend test-frontend build-frontend format-frontend
+.PHONY: up down backend-dev frontend-dev lint test format
 
-test-backend:
-cd backend && pytest -q
+up:
+	docker compose up --build
 
-lint-backend:
-cd backend && ruff check .
+down:
+	docker compose down -v
 
-run-backend:
-cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+backend-dev:
+	cd backend && uvicorn app.main:app --reload --port 8000
 
-lint-frontend:
-cd frontend && npm run lint
+frontend-dev:
+	cd frontend && npm install && npm run dev
 
-test-frontend:
-cd frontend && npm run test -- --run
+lint:
+	cd frontend && npm install && npm run lint
 
-build-frontend:
-cd frontend && npm run build
+test:
+	cd backend && pip install -r requirements.txt && pytest -q
 
-format-frontend:
-cd frontend && npm run format
+format:
+	@echo "Add formatters (ruff/prettier) as project evolves"

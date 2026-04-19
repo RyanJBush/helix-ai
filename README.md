@@ -1,79 +1,60 @@
-# Helix AI
+# Helix AI Monorepo
 
-Real-time stock sentiment and trading intelligence platform using NLP, streaming data, and a full-stack analytics dashboard.
+Simple but realistic scaffold for a real-time stock sentiment platform.
 
-## Monorepo Structure
+## Stack
+- FastAPI backend (REST + WebSockets)
+- React frontend (Vite + TypeScript)
+- PostgreSQL persistence
+- Hugging Face Transformers NLP (FinBERT + fallback)
+- Docker compose for local orchestration
+- GitHub Actions CI pipeline
 
-- `backend/` – FastAPI API, sentiment logic, WebSocket stream, pytest/ruff
-- `frontend/` – React + Vite + Tailwind app with Recharts visualizations
-- `docs/` – architecture and project docs
-- Root tooling: `Makefile`, `docker-compose.yml`, `.editorconfig`, GitHub Actions CI
-
-## Backend MVP Endpoints
-
-- `GET /health`
-- `POST /api/data/ingest`
-- `GET /api/data/news`
-- `POST /api/sentiment/analyze`
-- `GET /api/sentiment/{ticker}`
-- `GET /api/signals/{ticker}`
-- `GET /api/dashboard/summary`
-- `WebSocket /ws/stream`
-
-Backend data model targets production PostgreSQL entities:
-- `news_articles`
-- `sentiment_scores`
-- `aggregated_sentiment`
-- `trading_signals`
-
-## Frontend MVP Pages
-
-- Login
+## Frontend pages
 - Dashboard
 - Ticker View
 - News Feed
 - Signals
 
-Includes KPI cards, sentiment charts, ticker filters, and real-time updates from WebSocket stream events.
+## Frontend features
+- KPI cards and market summary
+- Sentiment sparkline charts
+- Ticker filtering and detail drilldowns
+- Real-time event updates via WebSocket + mock stream fallback
 
-## Local Development
+## Implemented backend workflow
+1. `POST /api/v1/news/ingest` (mock ingestion)
+2. `POST /api/v1/sentiment/analyze` (pretrained model inference)
+3. `GET /api/v1/analytics/ticker/{ticker}` (ticker aggregation)
+4. `GET /api/v1/signals/ticker/{ticker}` (signal generation)
+5. `WS /api/v1/streaming/ws` (real-time updates)
 
-### Option 1: Docker Compose
-
+## Quick Start
+### Run with Docker
 ```bash
-docker-compose up --build
+make up
 ```
 
-### Option 2: Manual
-
-Backend:
-
+### Run locally (split terminal)
 ```bash
+# backend
 cd backend
-python -m pip install '.[dev]'
-uvicorn app.main:app --reload
-```
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
 
-Frontend:
-
-```bash
+# frontend
 cd frontend
 npm install
 npm run dev
 ```
 
-## Validation
+## Example tickers
+- `AAPL`
+- `MSFT`
+- `TSLA`
+- `NVDA`
 
-Backend:
-
-```bash
-make lint-backend
-make test-backend
-```
-
-Frontend:
-
-```bash
-make lint-frontend
-make build-frontend
-```
+## Next Steps
+- Connect ingestion to a real market/news provider.
+- Add auth, migrations, and scheduling.
+- Implement charting library + richer portfolio analytics.
