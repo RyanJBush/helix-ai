@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session
@@ -16,6 +16,10 @@ from app.services.weighting_service import market_hours_multiplier, time_decay_m
 
 class AggregationService:
     @staticmethod
+    def _utc_now() -> datetime:
+        return datetime.now(UTC).replace(tzinfo=None)
+
+    @staticmethod
     def _label_to_direction(label: str) -> float:
         lowered = label.lower()
         if "pos" in lowered:
@@ -25,7 +29,7 @@ class AggregationService:
         return 0.0
 
     def summarize_ticker(self, db: Session, ticker: str, lookback_hours: int = 24) -> TickerAggregationResponse:
-        now = datetime.utcnow()
+        now = self._utc_now()
         start = now - timedelta(hours=lookback_hours)
         ticker_upper = ticker.upper()
 

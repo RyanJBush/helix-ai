@@ -14,7 +14,7 @@ from app.models import ingestion, news, sentiment, signal  # noqa: F401
 @pytest.fixture()
 def client() -> Generator[TestClient, None, None]:
     engine = create_engine(
-        "sqlite://",
+        "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )

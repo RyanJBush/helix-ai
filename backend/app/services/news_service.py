@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from hashlib import sha1
 import re
 
@@ -52,6 +52,10 @@ class IngestionResult:
 
 class NewsIngestionService:
     @staticmethod
+    def _utc_now() -> datetime:
+        return datetime.now(UTC).replace(tzinfo=None)
+
+    @staticmethod
     def _dedupe_key(ticker: str, source_type: str, headline: str) -> str:
         return sha1(f"{ticker}|{source_type}|{headline.strip().lower()}".encode("utf-8")).hexdigest()
 
@@ -82,7 +86,7 @@ class NewsIngestionService:
         article_idx: int,
         lookback_days: int,
     ) -> datetime:
-        now = datetime.utcnow()
+        now = NewsIngestionService._utc_now()
         if mode == "historical_backfill":
             offset_hours = (ticker_idx * 12) + (source_idx * 4) + (article_idx + 1) * 6
             return now - timedelta(hours=min(offset_hours, lookback_days * 24))
@@ -143,7 +147,7 @@ class NewsIngestionService:
                             headline=headline,
                             content=content,
                             published_at=published_at,
-                            ingested_at=datetime.utcnow(),
+                            ingested_at=self._utc_now(),
                         )
                         db.add(item)
                         db.flush()
@@ -168,7 +172,7 @@ class NewsIngestionService:
             run.records_inserted = len(inserted)
             run.failures_count = failures
             run.status = "completed" if failures == 0 else "partial_failed"
-            run.completed_at = datetime.utcnow()
+            run.completed_at = self._utc_now()
             db.add(run)
             db.commit()
             return IngestionResult(run_id=run.id, items=inserted)
@@ -176,7 +180,7 @@ class NewsIngestionService:
             db.rollback()
             run.status = "failed"
             run.error_message = str(exc)
-            run.completed_at = datetime.utcnow()
+            run.completed_at = self._utc_now()
             db.add(run)
             db.commit()
             return IngestionResult(run_id=run.id, items=[])

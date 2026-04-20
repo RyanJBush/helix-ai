@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.core.config import settings
 from app.schemas.analytics import TickerAggregationResponse
@@ -14,6 +14,10 @@ class SignalThresholds:
 
 
 class SignalService:
+    @staticmethod
+    def _utc_now() -> datetime:
+        return datetime.now(UTC).replace(tzinfo=None)
+
     @staticmethod
     def _clamp_confidence(value: float) -> float:
         return round(max(0.0, min(value, 1.0)), 4)
@@ -35,7 +39,7 @@ class SignalService:
                 sell_threshold=config.sell_threshold,
                 min_confidence=config.min_confidence,
                 rationale="No recent sentiment coverage",
-                generated_at=datetime.utcnow(),
+                generated_at=self._utc_now(),
             )
 
         if aggregate.weighted_confidence < config.min_confidence:
@@ -48,7 +52,7 @@ class SignalService:
                 sell_threshold=config.sell_threshold,
                 min_confidence=config.min_confidence,
                 rationale="Weighted confidence below minimum threshold",
-                generated_at=datetime.utcnow(),
+                generated_at=self._utc_now(),
             )
 
         if aggregate.weighted_sentiment_score >= config.buy_threshold:
@@ -71,7 +75,7 @@ class SignalService:
             sell_threshold=config.sell_threshold,
             min_confidence=config.min_confidence,
             rationale=rationale,
-            generated_at=datetime.utcnow(),
+            generated_at=self._utc_now(),
         )
 
 

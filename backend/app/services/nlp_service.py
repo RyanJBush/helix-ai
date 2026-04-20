@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from transformers import pipeline
 
@@ -16,6 +16,10 @@ FIN_UNCERTAINTY_TERMS = {"uncertain", "volatile", "headwind", "challenging", "ri
 class NLPService:
     def __init__(self) -> None:
         self._classifier = None
+
+    @staticmethod
+    def _utc_now() -> datetime:
+        return datetime.now(UTC).replace(tzinfo=None)
 
     def _load_classifier(self):
         if self._classifier is None:
@@ -77,7 +81,7 @@ class NLPService:
             score=score,
             confidence=confidence,
             model_used=model_used,
-            processed_at=datetime.utcnow(),
+            processed_at=self._utc_now(),
         )
 
 

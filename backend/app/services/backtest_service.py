@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import UTC, datetime, time
 from statistics import pstdev
 
 from sqlalchemy import and_, select
@@ -47,7 +47,7 @@ class BacktestService:
             sell_threshold=payload.sell_threshold,
             min_confidence=payload.min_confidence,
         )
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
 
         for day in sorted(by_day):
             records = by_day[day]
@@ -90,7 +90,7 @@ class BacktestService:
         returns = [r.proxy_return for r in non_hold]
         cumulative = round(sum(returns), 4)
         volatility = pstdev(returns) if len(returns) > 1 else 0.0
-        sharpe_like = round((sum(returns) / len(returns)) / volatility, 4) if returns and volatility else 0.0
+        sharpe_like = round((sum(returns) / len(returns)) / volatility, 4) if returns and volatility > 0 else 0.0
 
         return BacktestResponse(
             ticker=ticker,
