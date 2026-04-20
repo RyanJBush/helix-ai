@@ -23,11 +23,14 @@ Simple but realistic scaffold for a real-time stock sentiment platform.
 - Real-time event updates via WebSocket + mock stream fallback
 
 ## Implemented backend workflow
-1. `POST /api/v1/news/ingest` (mock ingestion)
-2. `POST /api/v1/sentiment/analyze` (pretrained model inference)
-3. `GET /api/v1/analytics/ticker/{ticker}` (ticker aggregation)
-4. `GET /api/v1/signals/ticker/{ticker}` (signal generation)
-5. `WS /api/v1/streaming/ws` (real-time updates)
+1. `POST /api/v1/news/ingest` (multi-source ingestion + dedupe + run tracking)
+2. `GET /api/v1/news/ingest/status/{run_id}` (ingestion status)
+3. `POST /api/v1/sentiment/analyze` (finance-aware sentiment + confidence)
+4. `GET /api/v1/analytics/ticker/{ticker}` (weighted aggregation)
+5. `GET /api/v1/analytics/ticker/{ticker}/drilldown` (ticker drill-down metrics/history)
+6. `GET /api/v1/signals/ticker/{ticker}` (weighted thresholds with tunable params)
+7. `POST /api/v1/backtesting` (historical backtest scaffolding)
+8. `WS /api/v1/streaming/ws` (real-time updates)
 
 ## Quick Start
 ### Run with Docker

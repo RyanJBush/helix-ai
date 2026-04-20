@@ -7,7 +7,7 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.db.session import Base, engine
-from app.models import news, sentiment, signal  # noqa: F401
+from app.models import ingestion, news, sentiment, signal  # noqa: F401
 
 
 @asynccontextmanager

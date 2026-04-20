@@ -8,6 +8,7 @@ from app.models.sentiment import SentimentRecord
 from app.schemas.sentiment import SentimentRequest, SentimentResponse
 from app.services.nlp_service import nlp_service
 from app.services.stream_service import stream_manager
+from app.services.weighting_service import get_source_weight
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -24,8 +25,12 @@ def analyze(
     db_record = SentimentRecord(
         ticker=result.ticker,
         source=payload.source,
+        news_item_id=payload.news_item_id,
         text=payload.text,
         score=result.score,
+        confidence=result.confidence,
+        source_weight=get_source_weight(payload.source),
+        model_used=result.model_used,
         label=result.label,
     )
     db.add(db_record)
@@ -38,6 +43,7 @@ def analyze(
             "ticker": result.ticker,
             "label": result.label,
             "score": result.score,
+            "confidence": result.confidence,
             "processed_at": result.processed_at.isoformat(),
         },
     )
