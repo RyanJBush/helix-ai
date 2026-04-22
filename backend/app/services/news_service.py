@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from hashlib import sha1
+import json
 import re
 
 from sqlalchemy import desc, select
@@ -53,7 +54,7 @@ class IngestionResult:
 class NewsIngestionService:
     @staticmethod
     def _utc_now() -> datetime:
-        return datetime.now(UTC).replace(tzinfo=None)
+        return datetime.now(timezone.utc).replace(tzinfo=None)
 
     @staticmethod
     def _dedupe_key(ticker: str, source_type: str, headline: str) -> str:
@@ -104,6 +105,8 @@ class NewsIngestionService:
 
         inserted: list[NewsItemResponse] = []
         failures = 0
+        duplicates_skipped = 0
+        source_stats: dict[str, int] = {}
 
         try:
             for ticker_idx, raw_ticker in enumerate(payload.tickers):
@@ -132,6 +135,7 @@ class NewsIngestionService:
 
                         existing = db.scalar(select(NewsItem.id).where(NewsItem.dedupe_key == dedupe_key))
                         if existing:
+                            duplicates_skipped += 1
                             continue
 
                         related_tickers = self._extract_related_tickers(f"{headline} {content}", ticker=ticker)
@@ -168,9 +172,12 @@ class NewsIngestionService:
                                 ingested_at=item.ingested_at,
                             )
                         )
+                        source_stats[source_type] = source_stats.get(source_type, 0) + 1
 
             run.records_inserted = len(inserted)
+            run.duplicates_skipped = duplicates_skipped
             run.failures_count = failures
+            run.source_stats = json.dumps(source_stats, sort_keys=True)
             run.status = "completed" if failures == 0 else "partial_failed"
             run.completed_at = self._utc_now()
             db.add(run)
@@ -196,7 +203,9 @@ class NewsIngestionService:
             requested_tickers=run.requested_tickers.split(",") if run.requested_tickers else [],
             requested_sources=run.requested_sources.split(",") if run.requested_sources else [],
             records_inserted=run.records_inserted,
+            duplicates_skipped=run.duplicates_skipped,
             failures_count=run.failures_count,
+            source_stats=json.loads(run.source_stats) if run.source_stats else {},
             error_message=run.error_message,
             started_at=run.started_at,
             completed_at=run.completed_at,

@@ -1,11 +1,13 @@
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
 
+from app.core.middleware import enforce_rate_limit
 from app.db.session import get_db
 from app.models.sentiment import SentimentRecord
 from app.schemas.sentiment import SentimentRequest, SentimentResponse
+from app.services.aggregation_service import aggregation_service
 from app.services.nlp_service import nlp_service
 from app.services.stream_service import stream_manager
 from app.services.weighting_service import get_source_weight
@@ -18,15 +20,18 @@ router = APIRouter()
 def analyze(
     payload: SentimentRequest,
     background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> SentimentResponse:
+    enforce_rate_limit(request)
     result = nlp_service.analyze_sentiment(payload)
+    persisted_text = (payload.text or " ".join(part for part in [payload.headline, payload.body] if part)).strip()
 
     db_record = SentimentRecord(
         ticker=result.ticker,
         source=payload.source,
         news_item_id=payload.news_item_id,
-        text=payload.text,
+        text=persisted_text,
         score=result.score,
         confidence=result.confidence,
         source_weight=get_source_weight(payload.source),
@@ -35,6 +40,7 @@ def analyze(
     )
     db.add(db_record)
     db.commit()
+    aggregation_service._ticker_cache.clear()
 
     background_tasks.add_task(
         stream_manager.broadcast,
@@ -44,6 +50,7 @@ def analyze(
             "label": result.label,
             "score": result.score,
             "confidence": result.confidence,
+            "topics": result.topics,
             "processed_at": result.processed_at.isoformat(),
         },
     )

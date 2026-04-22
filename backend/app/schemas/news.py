@@ -38,7 +38,9 @@ class IngestionRunResponse(BaseModel):
     requested_tickers: list[str]
     requested_sources: list[str]
     records_inserted: int
+    duplicates_skipped: int
     failures_count: int
+    source_stats: dict[str, int]
     error_message: str | None
     started_at: datetime
     completed_at: datetime | None
