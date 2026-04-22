@@ -4,22 +4,25 @@ import PageHeader from '../components/PageHeader';
 import TickerFilter from '../components/dashboard/TickerFilter';
 import SentimentChart from '../components/dashboard/SentimentChart';
 import { WATCHLIST } from '../data/mockMarket';
-import { getTickerAggregation, getTickerSignal } from '../services/api';
-import type { Signal, TickerAggregation } from '../types/market';
+import { getTickerAggregation, getTickerArticleTable, getTickerSignal } from '../services/api';
+import type { Signal, TickerAggregation, TickerArticleTable } from '../types/market';
 
 function TickerViewPage() {
   const [selectedTicker, setSelectedTicker] = useState('AAPL');
   const [aggregate, setAggregate] = useState<TickerAggregation | null>(null);
   const [signal, setSignal] = useState<Signal | null>(null);
+  const [articleTable, setArticleTable] = useState<TickerArticleTable | null>(null);
 
   useEffect(() => {
     void (async () => {
-      const [aggregationData, signalData] = await Promise.all([
+      const [aggregationData, signalData, articleData] = await Promise.all([
         getTickerAggregation(selectedTicker),
         getTickerSignal(selectedTicker),
+        getTickerArticleTable(selectedTicker),
       ]);
       setAggregate(aggregationData);
       setSignal(signalData);
+      setArticleTable(articleData);
     })();
   }, [selectedTicker]);
 
@@ -66,6 +69,34 @@ function TickerViewPage() {
         ) : (
           <p>Loading aggregation...</p>
         )}
+      </article>
+
+      <article className="panel">
+        <h3>Article Score Table</h3>
+        <table className="signals-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Source</th>
+              <th>Label</th>
+              <th>Score</th>
+              <th>Confidence</th>
+              <th>Preview</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(articleTable?.rows ?? []).map((row) => (
+              <tr key={row.sentiment_record_id}>
+                <td>{new Date(row.timestamp).toLocaleTimeString()}</td>
+                <td>{row.source}</td>
+                <td>{row.label}</td>
+                <td>{row.score.toFixed(2)}</td>
+                <td>{(row.confidence * 100).toFixed(0)}%</td>
+                <td>{row.text_preview}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </article>
     </section>
   );

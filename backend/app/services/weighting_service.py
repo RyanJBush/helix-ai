@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from app.core.config import settings
 
@@ -25,7 +25,7 @@ def market_hours_multiplier(timestamp: datetime) -> float:
 
 
 def time_decay_multiplier(created_at: datetime, now: datetime | None = None) -> float:
-    now_utc = now or datetime.now(UTC).replace(tzinfo=None)
+    now_utc = now or datetime.now(timezone.utc).replace(tzinfo=None)
     age_hours = max((now_utc - created_at).total_seconds() / 3600, 0.0)
     half_life = max(settings.SENTIMENT_HALF_LIFE_HOURS, 0.5)
     return 0.5 ** (age_hours / half_life)

@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     DEFAULT_SELL_THRESHOLD: float = -0.25
     DEFAULT_MIN_SIGNAL_CONFIDENCE: float = 0.45
     SENTIMENT_HALF_LIFE_HOURS: float = 6.0
+    AGGREGATION_CACHE_TTL_SECONDS: int = 30
+    API_RATE_LIMIT_PER_MINUTE: int = 120
     AUTO_CREATE_TABLES: bool = False
 
     @property

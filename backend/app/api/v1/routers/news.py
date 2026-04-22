@@ -1,8 +1,9 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
+from app.core.middleware import enforce_rate_limit
 from app.db.session import get_db
 from app.schemas.news import IngestNewsRequest, IngestionRunResponse, NewsItemResponse
 from app.services.news_service import news_ingestion_service
@@ -12,7 +13,13 @@ router = APIRouter()
 
 
 @router.post("/ingest", response_model=list[NewsItemResponse])
-def ingest_news(payload: IngestNewsRequest, response: Response, db: Session = Depends(get_db)) -> list[NewsItemResponse]:
+def ingest_news(
+    payload: IngestNewsRequest,
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> list[NewsItemResponse]:
+    enforce_rate_limit(request)
     result = news_ingestion_service.ingest_news(db, payload)
     response.headers["X-Ingestion-Run-Id"] = str(result.run_id)
     logger.info("Ingested %s news records for tickers=%s", len(result.items), payload.tickers)
