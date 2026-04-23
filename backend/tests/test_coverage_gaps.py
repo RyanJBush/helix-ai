@@ -3,6 +3,7 @@ import json
 
 import pytest
 from pydantic import ValidationError
+from fastapi import HTTPException
 
 from app.api.v1.routers import streaming
 from app.core.middleware import RequestRateLimiter
@@ -95,7 +96,7 @@ def test_jobs_missing_and_internal_error_branches(client, monkeypatch) -> None:
     assert missing.status_code == 404
     assert missing.json()["detail"] == "Job not found"
 
-    monkeypatch.setattr("app.api.v1.routers.jobs.job_service.get_job", lambda _job_id: None)
+    monkeypatch.setattr("app.api.v1.routers.jobs.job_service.get_job", lambda _: None)
 
     ingestion = client.post(
         "/api/v1/jobs/ingestion",
@@ -124,7 +125,7 @@ def test_rate_limiter_overflow_branch() -> None:
     limiter = RequestRateLimiter(limit_per_minute=10)
     for _ in range(10):
         limiter.check("127.0.0.1")
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(HTTPException) as exc:
         limiter.check("127.0.0.1")
     assert "Rate limit exceeded" in str(exc.value)
 
@@ -132,4 +133,3 @@ def test_rate_limiter_overflow_branch() -> None:
 def test_sentiment_request_requires_content() -> None:
     with pytest.raises(ValidationError):
         SentimentRequest(ticker="AAPL", source="financial_news")
-
