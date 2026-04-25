@@ -44,3 +44,11 @@ class IngestionRunResponse(BaseModel):
     error_message: str | None
     started_at: datetime
     completed_at: datetime | None
+
+
+class IngestAndScoreResponse(BaseModel):
+    run_id: int
+    tickers: list[str]
+    news_items_inserted: int
+    sentiments_created: int
+    signals_created: int

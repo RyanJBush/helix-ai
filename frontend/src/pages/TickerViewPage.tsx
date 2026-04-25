@@ -4,32 +4,52 @@ import PageHeader from '../components/PageHeader';
 import TickerFilter from '../components/dashboard/TickerFilter';
 import SentimentChart from '../components/dashboard/SentimentChart';
 import { WATCHLIST } from '../data/mockMarket';
-import { getTickerAggregation, getTickerArticleTable, getTickerSignal } from '../services/api';
-import type { Signal, TickerAggregation, TickerArticleTable } from '../types/market';
+import { getSignalExplanation, getTickerAggregation, getTickerArticleTable, getTickerDrilldown, getTickerMetrics, getTickerSignal } from '../services/api';
+import type {
+  Signal,
+  SignalExplanationResponse,
+  TickerAggregation,
+  TickerArticleTable,
+  TickerDrilldownResponse,
+  TickerMetricsResponse,
+} from '../types/market';
 
 function TickerViewPage() {
   const [selectedTicker, setSelectedTicker] = useState('AAPL');
   const [aggregate, setAggregate] = useState<TickerAggregation | null>(null);
   const [signal, setSignal] = useState<Signal | null>(null);
   const [articleTable, setArticleTable] = useState<TickerArticleTable | null>(null);
+  const [metrics, setMetrics] = useState<TickerMetricsResponse | null>(null);
+  const [drilldown, setDrilldown] = useState<TickerDrilldownResponse | null>(null);
+  const [explanation, setExplanation] = useState<SignalExplanationResponse | null>(null);
 
   useEffect(() => {
     void (async () => {
-      const [aggregationData, signalData, articleData] = await Promise.all([
+      const [aggregationData, signalData, articleData, metricsData, drilldownData, explanationData] = await Promise.all([
         getTickerAggregation(selectedTicker),
         getTickerSignal(selectedTicker),
         getTickerArticleTable(selectedTicker),
+        getTickerMetrics(selectedTicker),
+        getTickerDrilldown(selectedTicker),
+        getSignalExplanation(selectedTicker),
       ]);
       setAggregate(aggregationData);
       setSignal(signalData);
       setArticleTable(articleData);
+      setMetrics(metricsData);
+      setDrilldown(drilldownData);
+      setExplanation(explanationData);
     })();
   }, [selectedTicker]);
 
   const chartSeries = useMemo(() => {
-    const base = aggregate?.avg_score ?? 0.5;
-    return Array.from({ length: 12 }).map((_, index) => Math.min(0.95, Math.max(0.1, base + (index % 2 ? 0.03 : -0.02))));
-  }, [aggregate]);
+    const points = metrics?.points ?? [];
+    if (!points.length) {
+      const base = aggregate?.avg_score ?? 0.5;
+      return Array.from({ length: 12 }).map((_, index) => Math.min(0.95, Math.max(0.1, base + (index % 2 ? 0.03 : -0.02))));
+    }
+    return points.map((point) => Math.min(1, Math.max(0, (point.weighted_sentiment_score + 1) / 2)));
+  }, [aggregate, metrics]);
 
   return (
     <section>
@@ -98,6 +118,41 @@ function TickerViewPage() {
           </tbody>
         </table>
       </article>
+
+      <div className="panel-grid">
+        <article className="panel">
+          <h3>Recent Sentiment History</h3>
+          <ul className="event-list">
+            {(drilldown?.sentiment_history ?? []).slice(0, 8).map((row) => (
+              <li key={`${row.timestamp}-${row.source}`}>
+                {new Date(row.timestamp).toLocaleString()} • <strong>{row.label}</strong> • {row.source} • score {row.score.toFixed(2)}
+              </li>
+            ))}
+            {!drilldown?.sentiment_history.length ? <li>No sentiment history yet.</li> : null}
+          </ul>
+        </article>
+
+        <article className="panel">
+          <h3>Signal Explainability</h3>
+          {explanation ? (
+            <>
+              <p>
+                Generated signal: <strong>{explanation.generated_signal}</strong> • {(explanation.generated_confidence * 100).toFixed(0)}%
+              </p>
+              {explanation.confidence_disclaimer ? <p className="muted">{explanation.confidence_disclaimer}</p> : null}
+              <ul className="event-list">
+                {explanation.top_contributors.slice(0, 5).map((item) => (
+                  <li key={item.sentiment_record_id}>
+                    #{item.sentiment_record_id} {item.source} • {item.label} • weight {item.contribution_weight}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p>Loading explainability...</p>
+          )}
+        </article>
+      </div>
     </section>
   );
 }

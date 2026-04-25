@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "helix"
 
     NLP_MODEL_NAME: str = Field(default="ProsusAI/finbert", description="HF model for sentiment inference")
+    NLP_PROVIDER: str = Field(
+        default="heuristic",
+        description="Sentiment provider mode: heuristic, transformers, or auto",
+    )
     DEFAULT_BUY_THRESHOLD: float = 0.25
     DEFAULT_SELL_THRESHOLD: float = -0.25
     DEFAULT_MIN_SIGNAL_CONFIDENCE: float = 0.45

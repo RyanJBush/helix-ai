@@ -13,6 +13,8 @@ from app.schemas.backtest import (
     PaperTradeDay,
     PaperTradeRequest,
     PaperTradeResponse,
+    ScenarioBacktestResponse,
+    ScenarioBacktestResult,
     ThresholdCandidate,
     ThresholdTuningRequest,
     ThresholdTuningResponse,
@@ -22,6 +24,12 @@ from app.services.weighting_service import market_hours_multiplier, time_decay_m
 
 
 class BacktestService:
+    ASSUMPTIONS = [
+        "Proxy returns are sentiment-derived and not sourced from market execution data.",
+        "Benchmark return is fixed daily drift and intended only as a baseline comparator.",
+        "Signals are generated from aggregated text sentiment, not full multi-factor price models.",
+    ]
+
     @staticmethod
     def _label_to_direction(label: str) -> float:
         lowered = label.lower()
@@ -152,6 +160,14 @@ class BacktestService:
         precision = round(true_positive / (true_positive + false_positive), 4) if (true_positive + false_positive) else 0.0
         recall = round(true_positive / (true_positive + false_negative), 4) if (true_positive + false_negative) else 0.0
         correlation = self._return_correlation(returns, next_day_returns)
+        avg_return_per_trade = round(sum(returns) / len(returns), 4) if returns else 0.0
+        expectancy = round((precision * avg_return_per_trade) - ((1 - precision) * abs(avg_return_per_trade)), 4) if returns else 0.0
+        long_candidates = [r for r in non_hold if r.signal == "BUY"]
+        short_candidates = [r for r in non_hold if r.signal == "SELL"]
+        long_wins = len([r for r in long_candidates if r.proxy_return > 0])
+        short_wins = len([r for r in short_candidates if r.proxy_return < 0])
+        long_hit_rate = round(long_wins / len(long_candidates), 4) if long_candidates else 0.0
+        short_hit_rate = round(short_wins / len(short_candidates), 4) if short_candidates else 0.0
 
         return BacktestResponse(
             ticker=ticker,
@@ -168,6 +184,11 @@ class BacktestService:
             max_drawdown=round(max_drawdown, 4),
             sharpe_like_ratio=sharpe_like,
             return_correlation=correlation,
+            avg_return_per_trade=avg_return_per_trade,
+            expectancy=expectancy,
+            long_hit_rate=long_hit_rate,
+            short_hit_rate=short_hit_rate,
+            assumptions=self.ASSUMPTIONS,
             confusion_matrix=ConfusionMatrix(
                 true_positive=true_positive,
                 false_positive=false_positive,
@@ -278,6 +299,51 @@ class BacktestService:
             final_portfolio_value=round(final_value, 2),
             total_trades=trades,
             days=days,
+        )
+
+    def run_scenarios(self, db: Session, ticker: str, start_date, end_date) -> ScenarioBacktestResponse:
+        ticker_upper = ticker.upper()
+        configs = [
+            ("conservative", 0.3, -0.3, 0.6),
+            ("balanced", 0.25, -0.25, 0.45),
+            ("aggressive", 0.15, -0.15, 0.3),
+        ]
+        scenarios: list[ScenarioBacktestResult] = []
+        for name, buy, sell, min_conf in configs:
+            result = self.run_backtest(
+                db,
+                BacktestRequest(
+                    ticker=ticker_upper,
+                    start_date=start_date,
+                    end_date=end_date,
+                    buy_threshold=buy,
+                    sell_threshold=sell,
+                    min_confidence=min_conf,
+                ),
+            )
+            scenarios.append(
+                ScenarioBacktestResult(
+                    scenario=name,
+                    buy_threshold=buy,
+                    sell_threshold=sell,
+                    min_confidence=min_conf,
+                    hit_rate=result.hit_rate,
+                    sharpe_like_ratio=result.sharpe_like_ratio,
+                    cumulative_proxy_return=result.cumulative_proxy_return,
+                    cumulative_relative_return=result.cumulative_relative_return,
+                )
+            )
+
+        ordered = sorted(
+            scenarios,
+            key=lambda item: (item.sharpe_like_ratio, item.hit_rate, item.cumulative_relative_return),
+            reverse=True,
+        )
+        return ScenarioBacktestResponse(
+            ticker=ticker_upper,
+            period_start=start_date,
+            period_end=end_date,
+            scenarios=ordered,
         )
 
 
