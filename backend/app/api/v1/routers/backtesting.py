@@ -7,10 +7,12 @@ from app.schemas.backtest import (
     BacktestResponse,
     PaperTradeRequest,
     PaperTradeResponse,
+    ScenarioBacktestResponse,
     ThresholdTuningRequest,
     ThresholdTuningResponse,
 )
 from app.services.backtest_service import backtest_service
+from datetime import date
 
 router = APIRouter()
 
@@ -28,3 +30,13 @@ def tune_thresholds(payload: ThresholdTuningRequest, db: Session = Depends(get_d
 @router.post("/paper-trade", response_model=PaperTradeResponse)
 def paper_trade(payload: PaperTradeRequest, db: Session = Depends(get_db)) -> PaperTradeResponse:
     return backtest_service.run_paper_trade(db, payload)
+
+
+@router.get("/scenarios/{ticker}", response_model=ScenarioBacktestResponse)
+def run_scenarios(
+    ticker: str,
+    start_date: date,
+    end_date: date,
+    db: Session = Depends(get_db),
+) -> ScenarioBacktestResponse:
+    return backtest_service.run_scenarios(db, ticker=ticker, start_date=start_date, end_date=end_date)

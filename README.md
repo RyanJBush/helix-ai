@@ -39,15 +39,17 @@ Simple but realistic scaffold for a real-time stock sentiment platform.
 11. `GET /api/v1/signals/watchlist/alerts` (watchlist alert center for sharp-shift/low-confidence monitoring)
 12. `POST /api/v1/backtesting` (historical backtest scaffolding + benchmark/precision metrics)
    - Includes next-day return proxy, intraday move proxy, volatility-change proxy, and return correlation.
+   - Adds trade-quality metrics (`avg_return_per_trade`, `expectancy`, long/short hit rates) and assumptions metadata for transparent interpretation.
 13. `POST /api/v1/backtesting/tune` (threshold tuning grid search)
-14. `POST /api/v1/backtesting/paper-trade` (paper-trading simulation ledger)
-15. `WS /api/v1/streaming/ws` (real-time updates)
-16. `GET /api/v1/trust/signals/{ticker}/explanation` (article-to-signal traceability + contradiction detection)
-17. `POST /api/v1/trust/annotations` and `GET /api/v1/trust/annotations/{ticker}` (analyst annotation workflow)
-18. `GET /api/v1/trust/signals/{ticker}/audit` (signal audit trail)
-19. `GET /api/v1/briefings/ticker/{ticker}` and `POST /api/v1/briefings/watchlist` (AI-style ticker briefings and watchlist recaps)
-20. `POST /api/v1/replay` (seeded replay mode for deterministic demo/event playback)
-21. `POST /api/v1/jobs/ingestion`, `POST /api/v1/jobs/sentiment-batch`, `GET /api/v1/jobs/{job_id}` (background jobs + status tracking)
+14. `GET /api/v1/backtesting/scenarios/{ticker}` (preset scenario leaderboard: conservative/balanced/aggressive)
+15. `POST /api/v1/backtesting/paper-trade` (paper-trading simulation ledger)
+16. `WS /api/v1/streaming/ws` (real-time updates)
+17. `GET /api/v1/trust/signals/{ticker}/explanation` (article-to-signal traceability + contradiction detection)
+18. `POST /api/v1/trust/annotations` and `GET /api/v1/trust/annotations/{ticker}` (analyst annotation workflow)
+19. `GET /api/v1/trust/signals/{ticker}/audit` (signal audit trail)
+20. `GET /api/v1/briefings/ticker/{ticker}` and `POST /api/v1/briefings/watchlist` (AI-style ticker briefings and watchlist recaps)
+21. `POST /api/v1/replay` (seeded replay mode for deterministic demo/event playback)
+22. `POST /api/v1/jobs/ingestion`, `POST /api/v1/jobs/sentiment-batch`, `GET /api/v1/jobs/{job_id}` (background jobs + status tracking)
 
 ## Quick Start
 ### Run with Docker
