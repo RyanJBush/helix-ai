@@ -59,12 +59,19 @@ make up
 # backend
 cd backend
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+cp .env.example .env
+NLP_PROVIDER=heuristic PYTHONPATH=. uvicorn app.main:app --reload --port 8000
 
 # frontend
 cd frontend
 npm install
 npm run dev
+```
+
+### Run tests (deterministic local mode)
+```bash
+cd backend
+NLP_PROVIDER=heuristic PYTHONPATH=. pytest -q
 ```
 
 ### Operational checks
