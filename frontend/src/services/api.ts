@@ -4,10 +4,7 @@ import type {
   EventDistributionItem,
   IngestAndScoreSummary,
   NewsItem,
-  ScenarioBacktestResponse,
   Signal,
-  SignalExplanationResponse,
-  TickerDrilldownResponse,
   TickerAggregation,
   TickerArticleTable,
   TickerMetricsResponse,
@@ -141,76 +138,6 @@ export async function getTickerMetrics(ticker: string): Promise<TickerMetricsRes
   });
 }
 
-export async function getTickerDrilldown(ticker: string): Promise<TickerDrilldownResponse> {
-  return fetchJson(`${API_BASE}/analytics/ticker/${ticker}/drilldown?lookback_hours=72`, undefined, {
-    ticker,
-    lookback_hours: 72,
-    aggregate: MOCK_AGGREGATES[ticker] ?? MOCK_AGGREGATES.AAPL,
-    sentiment_history: [],
-    signal_history: [],
-  });
-}
-
-export async function getSignalExplanation(ticker: string): Promise<SignalExplanationResponse> {
-  return fetchJson(`${API_BASE}/trust/signals/${ticker}/explanation?lookback_hours=72&top_n=5`, undefined, {
-    ticker,
-    lookback_hours: 72,
-    generated_signal: 'HOLD',
-    generated_confidence: 0.5,
-    confidence_disclaimer: 'Fallback explanation mode.',
-    top_contributors: [],
-    contradictions: [],
-    generated_at: new Date().toISOString(),
-  });
-}
-
-export async function getBacktestScenarios(ticker: string): Promise<ScenarioBacktestResponse> {
-  const end = new Date();
-  const start = new Date(end);
-  start.setDate(end.getDate() - 30);
-  const query = new URLSearchParams({
-    start_date: start.toISOString().slice(0, 10),
-    end_date: end.toISOString().slice(0, 10),
-  });
-  return fetchJson(`${API_BASE}/backtesting/scenarios/${ticker}?${query.toString()}`, undefined, {
-    ticker,
-    period_start: start.toISOString().slice(0, 10),
-    period_end: end.toISOString().slice(0, 10),
-    scenarios: [
-      {
-        scenario: 'balanced',
-        buy_threshold: 0.25,
-        sell_threshold: -0.25,
-        min_confidence: 0.45,
-        hit_rate: 0.58,
-        sharpe_like_ratio: 0.42,
-        cumulative_proxy_return: 0.14,
-        cumulative_relative_return: 0.09,
-      },
-      {
-        scenario: 'conservative',
-        buy_threshold: 0.3,
-        sell_threshold: -0.3,
-        min_confidence: 0.6,
-        hit_rate: 0.62,
-        sharpe_like_ratio: 0.39,
-        cumulative_proxy_return: 0.11,
-        cumulative_relative_return: 0.07,
-      },
-      {
-        scenario: 'aggressive',
-        buy_threshold: 0.15,
-        sell_threshold: -0.15,
-        min_confidence: 0.3,
-        hit_rate: 0.53,
-        sharpe_like_ratio: 0.36,
-        cumulative_proxy_return: 0.18,
-        cumulative_relative_return: 0.1,
-      },
-    ],
-  });
-}
-
 export async function getWatchlistSignals(tickers: string[]): Promise<Signal[]> {
   const response = await fetchJson<{ generated_at: string; signals: Signal[] }>(
     `${API_BASE}/signals/watchlist`,
@@ -243,7 +170,6 @@ export async function getWatchlistAlerts(tickers: string[]): Promise<WatchlistAl
       ticker: 'TSLA',
       signal: 'HOLD',
       alert_type: 'low_confidence',
-      severity: 'medium',
       confidence: 0.41,
       detail: 'Signal confidence below 0.50; monitoring only.',
     },

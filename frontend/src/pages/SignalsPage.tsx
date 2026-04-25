@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import { WATCHLIST } from '../data/mockMarket';
 import { useMarketStream } from '../hooks/useMarketStream';
-import { getBacktestScenarios, getWatchlistAlerts, getWatchlistSignals } from '../services/api';
-import type { ScenarioBacktestResponse, Signal, WatchlistAlert } from '../types/market';
 import { getWatchlistAlerts, getWatchlistSignals } from '../services/api';
 import type { Signal, WatchlistAlert } from '../types/market';
 
@@ -12,15 +10,12 @@ function SignalsPage() {
   const { events } = useMarketStream(25);
   const [alerts, setAlerts] = useState<WatchlistAlert[]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
-  const [scenarioReport, setScenarioReport] = useState<ScenarioBacktestResponse | null>(null);
 
   useEffect(() => {
     void (async () => {
       const [alertData, signalData] = await Promise.all([getWatchlistAlerts(WATCHLIST), getWatchlistSignals(WATCHLIST)]);
       setAlerts(alertData);
       setSignals(signalData);
-      const scenarioData = await getBacktestScenarios(WATCHLIST[0]);
-      setScenarioReport(scenarioData);
     })();
   }, []);
 
@@ -73,39 +68,13 @@ function SignalsPage() {
           {alerts.length ? (
             alerts.map((alert) => (
               <li key={`${alert.ticker}-${alert.alert_type}`}>
-                <strong>{alert.ticker}</strong> {alert.alert_type} • {alert.severity} • {(alert.confidence * 100).toFixed(0)}%
+                <strong>{alert.ticker}</strong> {alert.alert_type} • {(alert.confidence * 100).toFixed(0)}%
               </li>
             ))
           ) : (
             <li>No active alerts.</li>
           )}
         </ul>
-      </article>
-
-      <article className="panel">
-        <h3>Backtest Scenario Leaderboard ({scenarioReport?.ticker ?? WATCHLIST[0]})</h3>
-        <table className="signals-table">
-          <thead>
-            <tr>
-              <th>Scenario</th>
-              <th>Hit Rate</th>
-              <th>Sharpe-like</th>
-              <th>Proxy Return</th>
-              <th>Relative Return</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(scenarioReport?.scenarios ?? []).map((row) => (
-              <tr key={row.scenario}>
-                <td>{row.scenario}</td>
-                <td>{(row.hit_rate * 100).toFixed(0)}%</td>
-                <td>{row.sharpe_like_ratio.toFixed(2)}</td>
-                <td>{(row.cumulative_proxy_return * 100).toFixed(1)}%</td>
-                <td>{(row.cumulative_relative_return * 100).toFixed(1)}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </article>
     </section>
   );
