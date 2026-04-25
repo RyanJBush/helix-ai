@@ -2,10 +2,14 @@ import { MOCK_AGGREGATES, MOCK_NEWS, MOCK_SIGNALS } from '../data/mockMarket';
 import type {
   DashboardOverview,
   EventDistributionItem,
+  IngestAndScoreSummary,
   NewsItem,
   Signal,
+  SignalExplanationResponse,
+  TickerDrilldownResponse,
   TickerAggregation,
   TickerArticleTable,
+  TickerMetricsResponse,
   TopicClusterSummary,
   WatchlistAlert,
 } from '../types/market';
@@ -44,6 +48,24 @@ export async function ingestNews(tickers: string[]): Promise<NewsItem[]> {
       body: JSON.stringify({ tickers, limit_per_ticker: 3 }),
     },
     MOCK_NEWS,
+  );
+}
+
+export async function ingestAndScore(tickers: string[]): Promise<IngestAndScoreSummary> {
+  return fetchJson(
+    `${API_BASE}/news/ingest-and-score`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tickers, limit_per_ticker: 3 }),
+    },
+    {
+      run_id: Date.now(),
+      tickers,
+      news_items_inserted: tickers.length * 3,
+      sentiments_created: tickers.length * 3,
+      signals_created: tickers.length,
+    },
   );
 }
 
@@ -101,6 +123,68 @@ export async function getTickerArticleTable(ticker: string): Promise<TickerArtic
   });
 }
 
+export async function getTickerMetrics(ticker: string): Promise<TickerMetricsResponse> {
+  return fetchJson(`${API_BASE}/analytics/ticker/${ticker}/metrics?lookback_hours=72&bucket_hours=6`, undefined, {
+    ticker,
+    bucket_hours: 6,
+    lookback_hours: 72,
+    points: Array.from({ length: 12 }).map((_, index) => ({
+      timestamp: new Date(Date.now() - (12 - index) * 6 * 60 * 60 * 1000).toISOString(),
+      article_count: 1 + (index % 3),
+      weighted_sentiment_score: Number((0.45 + Math.sin(index / 2) * 0.2).toFixed(4)),
+      weighted_confidence: Number((0.55 + Math.cos(index / 3) * 0.1).toFixed(4)),
+      positive_ratio: 0.5,
+      neutral_ratio: 0.3,
+      negative_ratio: 0.2,
+    })),
+  });
+}
+
+export async function getTickerDrilldown(ticker: string): Promise<TickerDrilldownResponse> {
+  return fetchJson(`${API_BASE}/analytics/ticker/${ticker}/drilldown?lookback_hours=72`, undefined, {
+    ticker,
+    lookback_hours: 72,
+    aggregate: MOCK_AGGREGATES[ticker] ?? MOCK_AGGREGATES.AAPL,
+    sentiment_history: [],
+    signal_history: [],
+  });
+}
+
+export async function getSignalExplanation(ticker: string): Promise<SignalExplanationResponse> {
+  return fetchJson(`${API_BASE}/trust/signals/${ticker}/explanation?lookback_hours=72&top_n=5`, undefined, {
+    ticker,
+    lookback_hours: 72,
+    generated_signal: 'HOLD',
+    generated_confidence: 0.5,
+    confidence_disclaimer: 'Fallback explanation mode.',
+    top_contributors: [],
+    contradictions: [],
+    generated_at: new Date().toISOString(),
+  });
+}
+
+export async function getWatchlistSignals(tickers: string[]): Promise<Signal[]> {
+  const response = await fetchJson<{ generated_at: string; signals: Signal[] }>(
+    `${API_BASE}/signals/watchlist`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tickers,
+        buy_threshold: 0.25,
+        sell_threshold: -0.25,
+        min_confidence: 0.45,
+        lookback_hours: 24,
+      }),
+    },
+    {
+      generated_at: new Date().toISOString(),
+      signals: MOCK_SIGNALS,
+    },
+  );
+  return response.signals;
+}
+
 export async function getWatchlistAlerts(tickers: string[]): Promise<WatchlistAlert[]> {
   const query = new URLSearchParams();
   tickers.forEach((ticker) => query.append('tickers', ticker));
@@ -111,6 +195,7 @@ export async function getWatchlistAlerts(tickers: string[]): Promise<WatchlistAl
       ticker: 'TSLA',
       signal: 'HOLD',
       alert_type: 'low_confidence',
+      severity: 'medium',
       confidence: 0.41,
       detail: 'Signal confidence below 0.50; monitoring only.',
     },

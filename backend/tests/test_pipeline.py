@@ -63,6 +63,22 @@ def test_news_ingest_and_sentiment_pipeline(client) -> None:
     assert "weighted_score" in signal.json()
     assert "factors" in signal.json()
 
+    pipeline = client.post(
+        "/api/v1/news/ingest-and-score",
+        json={
+            "tickers": ["AAPL", "MSFT"],
+            "limit_per_ticker": 2,
+            "sources": ["financial_news", "earnings_wire"],
+            "mode": "historical_backfill",
+            "lookback_days": 5,
+        },
+    )
+    assert pipeline.status_code == 200
+    pipeline_body = pipeline.json()
+    assert pipeline_body["news_items_inserted"] >= 1
+    assert pipeline_body["sentiments_created"] == pipeline_body["news_items_inserted"]
+    assert pipeline_body["signals_created"] == len(pipeline_body["tickers"])
+
 
 def test_ticker_drilldown_and_backtest_scaffold(client) -> None:
     client.post(
@@ -193,6 +209,8 @@ def test_watchlist_signal_generation(client) -> None:
     alerts = client.get("/api/v1/signals/watchlist/alerts?tickers=NVDA&tickers=AAPL&lookback_hours=72")
     assert alerts.status_code == 200
     assert "alerts" in alerts.json()
+    if alerts.json()["alerts"]:
+        assert "severity" in alerts.json()["alerts"][0]
 
 
 def test_trust_explanations_annotations_and_briefings(client) -> None:

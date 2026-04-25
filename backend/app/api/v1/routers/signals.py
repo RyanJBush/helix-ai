@@ -125,23 +125,38 @@ def watchlist_alerts(
         aggregate = aggregation_service.summarize_ticker(db, ticker=ticker, lookback_hours=lookback_hours)
         signal = signal_service.generate_from_aggregate(aggregate)
         if signal.alert:
+            severity = "high" if signal.confidence >= 0.65 else "medium"
             alerts.append(
                 WatchlistAlert(
                     ticker=ticker,
                     signal=signal.signal,
                     alert_type=signal.alert,
+                    severity=severity,
                     confidence=signal.confidence,
                     detail=signal.rationale,
                 )
             )
         elif signal.confidence < 0.5:
+            severity = "high" if signal.confidence < 0.35 else "medium"
             alerts.append(
                 WatchlistAlert(
                     ticker=ticker,
                     signal=signal.signal,
                     alert_type="low_confidence",
+                    severity=severity,
                     confidence=signal.confidence,
                     detail="Signal confidence below 0.50; monitoring only.",
+                )
+            )
+        elif signal.signal in {"BUY", "SELL"} and abs(signal.weighted_score) >= 0.45:
+            alerts.append(
+                WatchlistAlert(
+                    ticker=ticker,
+                    signal=signal.signal,
+                    alert_type="strong_directional_signal",
+                    severity="low",
+                    confidence=signal.confidence,
+                    detail="Directional signal crossed strong score threshold.",
                 )
             )
     return WatchlistAlertResponse(generated_at=datetime.utcnow(), alerts=alerts)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -75,6 +76,7 @@ class WatchlistAlert(BaseModel):
     ticker: str
     signal: str
     alert_type: str
+    severity: Literal["high", "medium", "low"]
     confidence: float
     detail: str
 
