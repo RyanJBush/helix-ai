@@ -63,6 +63,22 @@ def test_news_ingest_and_sentiment_pipeline(client) -> None:
     assert "weighted_score" in signal.json()
     assert "factors" in signal.json()
 
+    pipeline = client.post(
+        "/api/v1/news/ingest-and-score",
+        json={
+            "tickers": ["AAPL", "MSFT"],
+            "limit_per_ticker": 2,
+            "sources": ["financial_news", "earnings_wire"],
+            "mode": "historical_backfill",
+            "lookback_days": 5,
+        },
+    )
+    assert pipeline.status_code == 200
+    pipeline_body = pipeline.json()
+    assert pipeline_body["news_items_inserted"] >= 1
+    assert pipeline_body["sentiments_created"] == pipeline_body["news_items_inserted"]
+    assert pipeline_body["signals_created"] == len(pipeline_body["tickers"])
+
 
 def test_ticker_drilldown_and_backtest_scaffold(client) -> None:
     client.post(

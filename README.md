@@ -24,6 +24,7 @@ Simple but realistic scaffold for a real-time stock sentiment platform.
 
 ## Implemented backend workflow
 1. `POST /api/v1/news/ingest` (multi-source ingestion + dedupe + run tracking)
+   - `POST /api/v1/news/ingest-and-score` to execute ingestion → sentiment persistence → signal generation in one call.
 2. `GET /api/v1/news/ingest/status/{run_id}` (ingestion status)
 3. `POST /api/v1/sentiment/analyze` (finance-aware sentiment + confidence)
    - Supports headline/body decomposition, topic/event extraction, entity attribution, and optional baseline-vs-advanced model comparison.
@@ -59,12 +60,19 @@ make up
 # backend
 cd backend
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+cp .env.example .env
+NLP_PROVIDER=heuristic PYTHONPATH=. uvicorn app.main:app --reload --port 8000
 
 # frontend
 cd frontend
 npm install
 npm run dev
+```
+
+### Run tests (deterministic local mode)
+```bash
+cd backend
+NLP_PROVIDER=heuristic PYTHONPATH=. pytest -q
 ```
 
 ### Operational checks

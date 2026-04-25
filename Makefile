@@ -16,7 +16,7 @@ lint:
 	cd frontend && npm install && npm run lint
 
 test:
-	cd backend && pip install -r requirements.txt && pytest -q
+	cd backend && pip install -r requirements.txt && NLP_PROVIDER=heuristic PYTHONPATH=. pytest -q
 
 format:
 	@echo "Add formatters (ruff/prettier) as project evolves"
