@@ -13,6 +13,8 @@ import type {
   TickerDrilldownResponse,
   TickerMetricsResponse,
 } from '../types/market';
+import { getTickerAggregation, getTickerArticleTable, getTickerMetrics, getTickerSignal } from '../services/api';
+import type { Signal, TickerAggregation, TickerArticleTable, TickerMetricsResponse } from '../types/market';
 
 function TickerViewPage() {
   const [selectedTicker, setSelectedTicker] = useState('AAPL');
@@ -26,6 +28,10 @@ function TickerViewPage() {
   useEffect(() => {
     void (async () => {
       const [aggregationData, signalData, articleData, metricsData, drilldownData, explanationData] = await Promise.all([
+
+  useEffect(() => {
+    void (async () => {
+      const [aggregationData, signalData, articleData, metricsData] = await Promise.all([
         getTickerAggregation(selectedTicker),
         getTickerSignal(selectedTicker),
         getTickerArticleTable(selectedTicker),
