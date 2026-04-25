@@ -5,6 +5,8 @@ import { WATCHLIST } from '../data/mockMarket';
 import { useMarketStream } from '../hooks/useMarketStream';
 import { getBacktestScenarios, getWatchlistAlerts, getWatchlistSignals } from '../services/api';
 import type { ScenarioBacktestResponse, Signal, WatchlistAlert } from '../types/market';
+import { getWatchlistAlerts, getWatchlistSignals } from '../services/api';
+import type { Signal, WatchlistAlert } from '../types/market';
 
 function SignalsPage() {
   const { events } = useMarketStream(25);
