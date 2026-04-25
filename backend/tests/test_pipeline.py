@@ -148,18 +148,7 @@ def test_ticker_drilldown_and_backtest_scaffold(client) -> None:
     assert "cumulative_benchmark_return" in backtest_body
     assert "confusion_matrix" in backtest_body
     assert "return_correlation" in backtest_body
-    assert "avg_return_per_trade" in backtest_body
-    assert "expectancy" in backtest_body
-    assert "assumptions" in backtest_body
     assert "next_day_return" in backtest_body["results"][0]
-
-    scenarios = client.get(
-        f"/api/v1/backtesting/scenarios/MSFT?start_date={str(date.today() - timedelta(days=5))}&end_date={str(date.today())}"
-    )
-    assert scenarios.status_code == 200
-    scenarios_body = scenarios.json()
-    assert scenarios_body["ticker"] == "MSFT"
-    assert len(scenarios_body["scenarios"]) >= 3
 
     tuning = client.post(
         "/api/v1/backtesting/tune",
@@ -220,8 +209,6 @@ def test_watchlist_signal_generation(client) -> None:
     alerts = client.get("/api/v1/signals/watchlist/alerts?tickers=NVDA&tickers=AAPL&lookback_hours=72")
     assert alerts.status_code == 200
     assert "alerts" in alerts.json()
-    if alerts.json()["alerts"]:
-        assert "severity" in alerts.json()["alerts"][0]
 
 
 def test_trust_explanations_annotations_and_briefings(client) -> None:

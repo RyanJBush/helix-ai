@@ -47,11 +47,6 @@ class BacktestResponse(BaseModel):
     max_drawdown: float
     sharpe_like_ratio: float
     return_correlation: float
-    avg_return_per_trade: float
-    expectancy: float
-    long_hit_rate: float
-    short_hit_rate: float
-    assumptions: list[str]
     confusion_matrix: ConfusionMatrix
     results: list[BacktestDayResult]
 
@@ -108,21 +103,3 @@ class PaperTradeResponse(BaseModel):
     final_portfolio_value: float
     total_trades: int
     days: list[PaperTradeDay]
-
-
-class ScenarioBacktestResult(BaseModel):
-    scenario: str
-    buy_threshold: float
-    sell_threshold: float
-    min_confidence: float
-    hit_rate: float
-    sharpe_like_ratio: float
-    cumulative_proxy_return: float
-    cumulative_relative_return: float
-
-
-class ScenarioBacktestResponse(BaseModel):
-    ticker: str
-    period_start: date
-    period_end: date
-    scenarios: list[ScenarioBacktestResult]
