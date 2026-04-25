@@ -68,7 +68,7 @@ function SignalsPage() {
           {alerts.length ? (
             alerts.map((alert) => (
               <li key={`${alert.ticker}-${alert.alert_type}`}>
-                <strong>{alert.ticker}</strong> {alert.alert_type} • {alert.severity} • {(alert.confidence * 100).toFixed(0)}%
+                <strong>{alert.ticker}</strong> {alert.alert_type} • {(alert.confidence * 100).toFixed(0)}%
               </li>
             ))
           ) : (
