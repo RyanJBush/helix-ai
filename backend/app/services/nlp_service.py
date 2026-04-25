@@ -4,8 +4,6 @@ from hashlib import sha1
 import re
 from typing import Protocol
 
-from transformers import pipeline
-
 from app.core.config import settings
 from app.schemas.sentiment import ModelComparison, SentimentRequest, SentimentResponse
 
@@ -35,6 +33,8 @@ class TransformersSentimentProvider:
 
     def _load(self):
         if self._classifier is None:
+            from transformers import pipeline
+
             logger.info("Loading NLP model: %s", settings.NLP_MODEL_NAME)
             self._classifier = pipeline("sentiment-analysis", model=settings.NLP_MODEL_NAME)
 
@@ -51,9 +51,23 @@ class TransformersSentimentProvider:
         return normalized, float(result["score"])
 
 
+class HeuristicSentimentProvider:
+    def score(self, text: str) -> tuple[str, float]:
+        return NLPService._fallback_score(text)
+
+
 class NLPService:
     def __init__(self) -> None:
-        self._provider: SentimentProvider = TransformersSentimentProvider()
+        provider = settings.NLP_PROVIDER.strip().lower()
+        if provider == "transformers":
+            self._provider: SentimentProvider = TransformersSentimentProvider()
+            self._provider_name = settings.NLP_MODEL_NAME
+        elif provider == "auto":
+            self._provider = TransformersSentimentProvider()
+            self._provider_name = settings.NLP_MODEL_NAME
+        else:
+            self._provider = HeuristicSentimentProvider()
+            self._provider_name = "heuristic"
 
     @staticmethod
     def _utc_now() -> datetime:
@@ -133,7 +147,7 @@ class NLPService:
 
     def analyze_sentiment(self, payload: SentimentRequest) -> SentimentResponse:
         text, headline, body = self._compose_text(payload)
-        model_used = settings.NLP_MODEL_NAME
+        model_used = self._provider_name
         try:
             label, score = self._provider.score(text)
             label = self._normalize_label(label)
