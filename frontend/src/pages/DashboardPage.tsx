@@ -5,8 +5,8 @@ import { useMarketStream } from '../hooks/useMarketStream';
 import PageHeader from '../components/PageHeader';
 import KpiCard from '../components/dashboard/KpiCard';
 import SentimentChart from '../components/dashboard/SentimentChart';
-import { getDashboardOverview, getEventDistribution, getTopicClusters, getWatchlistAlerts } from '../services/api';
-import type { DashboardOverview, EventDistributionItem, TopicClusterSummary, WatchlistAlert } from '../types/market';
+import { getDashboardOverview, getEventDistribution, getTopicClusters, getWatchlistAlerts, getWatchlistSignals } from '../services/api';
+import type { DashboardOverview, EventDistributionItem, Signal, TopicClusterSummary, WatchlistAlert } from '../types/market';
 
 function DashboardPage() {
   const { events, isLive } = useMarketStream(12);
@@ -14,20 +14,35 @@ function DashboardPage() {
   const [eventDistribution, setEventDistribution] = useState<EventDistributionItem[]>([]);
   const [clusters, setClusters] = useState<TopicClusterSummary[]>([]);
   const [alerts, setAlerts] = useState<WatchlistAlert[]>([]);
+  const [watchlistSignals, setWatchlistSignals] = useState<Signal[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void (async () => {
-      const [overviewData, distributionData, clusterData, alertData] = await Promise.all([
+  const loadDashboard = async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const [overviewData, distributionData, clusterData, alertData, signalData] = await Promise.all([
         getDashboardOverview(WATCHLIST),
         getEventDistribution(),
         getTopicClusters(),
         getWatchlistAlerts(WATCHLIST),
+        getWatchlistSignals(WATCHLIST),
       ]);
       setOverview(overviewData);
       setEventDistribution(distributionData);
       setClusters(clusterData);
       setAlerts(alertData);
-    })();
+      setWatchlistSignals(signalData);
+    } catch {
+      setLoadError('Failed to refresh dashboard data.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadDashboard();
   }, []);
 
   const kpis = useMemo(() => {
@@ -45,7 +60,16 @@ function DashboardPage() {
 
   return (
     <section>
-      <PageHeader title="Dashboard" subtitle="Real-time sentiment and trading pulse" />
+      <PageHeader
+        title="Dashboard"
+        subtitle="Real-time sentiment and trading pulse"
+        rightSlot={
+          <button type="button" className="action-button" onClick={() => void loadDashboard()} disabled={isLoading}>
+            {isLoading ? 'Refreshing...' : 'Refresh data'}
+          </button>
+        }
+      />
+      {loadError ? <p className="muted">{loadError}</p> : null}
 
       <div className="kpi-grid">
         {kpis.map((kpi) => (
@@ -97,13 +121,37 @@ function DashboardPage() {
           {alerts.length ? (
             alerts.map((alert) => (
               <li key={`${alert.ticker}-${alert.alert_type}`}>
-                <strong>{alert.ticker}</strong> {alert.alert_type} • {(alert.confidence * 100).toFixed(0)}% • {alert.detail}
+                <strong>{alert.ticker}</strong> {alert.alert_type} • {alert.severity} • {(alert.confidence * 100).toFixed(0)}% • {alert.detail}
               </li>
             ))
           ) : (
             <li>No active watchlist alerts.</li>
           )}
         </ul>
+      </article>
+
+      <article className="panel">
+        <h3>Watchlist Signals</h3>
+        <table className="signals-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Signal</th>
+              <th>Score</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {watchlistSignals.map((signal) => (
+              <tr key={signal.ticker}>
+                <td>{signal.ticker}</td>
+                <td>{signal.signal}</td>
+                <td>{signal.weighted_score?.toFixed(2) ?? '-'}</td>
+                <td>{(signal.confidence * 100).toFixed(0)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </article>
     </section>
   );

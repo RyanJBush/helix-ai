@@ -5,6 +5,8 @@ import type {
   IngestAndScoreSummary,
   NewsItem,
   Signal,
+  SignalExplanationResponse,
+  TickerDrilldownResponse,
   TickerAggregation,
   TickerArticleTable,
   TickerMetricsResponse,
@@ -138,6 +140,29 @@ export async function getTickerMetrics(ticker: string): Promise<TickerMetricsRes
   });
 }
 
+export async function getTickerDrilldown(ticker: string): Promise<TickerDrilldownResponse> {
+  return fetchJson(`${API_BASE}/analytics/ticker/${ticker}/drilldown?lookback_hours=72`, undefined, {
+    ticker,
+    lookback_hours: 72,
+    aggregate: MOCK_AGGREGATES[ticker] ?? MOCK_AGGREGATES.AAPL,
+    sentiment_history: [],
+    signal_history: [],
+  });
+}
+
+export async function getSignalExplanation(ticker: string): Promise<SignalExplanationResponse> {
+  return fetchJson(`${API_BASE}/trust/signals/${ticker}/explanation?lookback_hours=72&top_n=5`, undefined, {
+    ticker,
+    lookback_hours: 72,
+    generated_signal: 'HOLD',
+    generated_confidence: 0.5,
+    confidence_disclaimer: 'Fallback explanation mode.',
+    top_contributors: [],
+    contradictions: [],
+    generated_at: new Date().toISOString(),
+  });
+}
+
 export async function getWatchlistSignals(tickers: string[]): Promise<Signal[]> {
   const response = await fetchJson<{ generated_at: string; signals: Signal[] }>(
     `${API_BASE}/signals/watchlist`,
@@ -170,6 +195,7 @@ export async function getWatchlistAlerts(tickers: string[]): Promise<WatchlistAl
       ticker: 'TSLA',
       signal: 'HOLD',
       alert_type: 'low_confidence',
+      severity: 'medium',
       confidence: 0.41,
       detail: 'Signal confidence below 0.50; monitoring only.',
     },

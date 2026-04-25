@@ -111,6 +111,58 @@ export interface WatchlistAlert {
   ticker: string;
   signal: string;
   alert_type: string;
+  severity: 'high' | 'medium' | 'low';
   confidence: number;
   detail: string;
+}
+
+export interface SentimentMetricPoint {
+  timestamp: string;
+  label: string;
+  score: number;
+  confidence: number;
+  source: string;
+  source_weight: number;
+}
+
+export interface SignalMetricPoint {
+  timestamp: string;
+  signal: 'BUY' | 'SELL' | 'HOLD';
+  confidence: number;
+  weighted_score: number;
+  rationale: string;
+}
+
+export interface TickerDrilldownResponse {
+  ticker: string;
+  lookback_hours: number;
+  aggregate: TickerAggregation;
+  sentiment_history: SentimentMetricPoint[];
+  signal_history: SignalMetricPoint[];
+}
+
+export interface SignalContributor {
+  sentiment_record_id: number;
+  source: string;
+  label: string;
+  score: number;
+  confidence: number;
+  contribution_weight: number;
+}
+
+export interface SourceContradiction {
+  source: string;
+  positive_count: number;
+  negative_count: number;
+}
+
+export interface SignalExplanationResponse {
+  ticker: string;
+  lookback_hours: number;
+  generated_signal: string;
+  generated_confidence: number;
+  confidence_disclaimer?: string | null;
+  top_contributors: SignalContributor[];
+  contradictions: SourceContradiction[];
+  generated_at: string;
 }

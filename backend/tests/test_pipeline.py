@@ -209,6 +209,8 @@ def test_watchlist_signal_generation(client) -> None:
     alerts = client.get("/api/v1/signals/watchlist/alerts?tickers=NVDA&tickers=AAPL&lookback_hours=72")
     assert alerts.status_code == 200
     assert "alerts" in alerts.json()
+    if alerts.json()["alerts"]:
+        assert "severity" in alerts.json()["alerts"][0]
 
 
 def test_trust_explanations_annotations_and_briefings(client) -> None:
