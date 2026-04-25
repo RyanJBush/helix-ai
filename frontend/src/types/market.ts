@@ -13,6 +13,12 @@ export interface Signal {
   ticker: string;
   signal: 'BUY' | 'SELL' | 'HOLD';
   confidence: number;
+  weighted_score?: number;
+  signal_strength?: number;
+  factors?: Record<string, number>;
+  buy_threshold?: number;
+  sell_threshold?: number;
+  min_confidence?: number;
   rationale: string;
   generated_at: string;
   alert?: string | null;
@@ -74,6 +80,31 @@ export interface TickerArticleTable {
   limit: number;
   offset: number;
   rows: TickerArticleRow[];
+}
+
+export interface TickerMetricSnapshot {
+  timestamp: string;
+  article_count: number;
+  weighted_sentiment_score: number;
+  weighted_confidence: number;
+  positive_ratio: number;
+  neutral_ratio: number;
+  negative_ratio: number;
+}
+
+export interface TickerMetricsResponse {
+  ticker: string;
+  bucket_hours: number;
+  lookback_hours: number;
+  points: TickerMetricSnapshot[];
+}
+
+export interface IngestAndScoreSummary {
+  run_id: number;
+  tickers: string[];
+  news_items_inserted: number;
+  sentiments_created: number;
+  signals_created: number;
 }
 
 export interface WatchlistAlert {

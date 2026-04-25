@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import PageHeader from '../components/PageHeader';
-import { MOCK_SIGNALS, WATCHLIST } from '../data/mockMarket';
+import { WATCHLIST } from '../data/mockMarket';
 import { useMarketStream } from '../hooks/useMarketStream';
-import { getWatchlistAlerts } from '../services/api';
-import type { WatchlistAlert } from '../types/market';
+import { getWatchlistAlerts, getWatchlistSignals } from '../services/api';
+import type { Signal, WatchlistAlert } from '../types/market';
 
 function SignalsPage() {
   const { events } = useMarketStream(25);
   const [alerts, setAlerts] = useState<WatchlistAlert[]>([]);
+  const [signals, setSignals] = useState<Signal[]>([]);
 
   useEffect(() => {
     void (async () => {
-      const data = await getWatchlistAlerts(WATCHLIST);
-      setAlerts(data);
+      const [alertData, signalData] = await Promise.all([getWatchlistAlerts(WATCHLIST), getWatchlistSignals(WATCHLIST)]);
+      setAlerts(alertData);
+      setSignals(signalData);
     })();
   }, []);
 
@@ -39,7 +41,7 @@ function SignalsPage() {
             </tr>
           </thead>
           <tbody>
-            {MOCK_SIGNALS.map((signal) => (
+            {signals.map((signal) => (
               <tr key={signal.ticker}>
                 <td>{signal.ticker}</td>
                 <td>
