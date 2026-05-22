@@ -5,6 +5,11 @@ import tempfile
 from types import ModuleType
 from unittest.mock import MagicMock
 
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 # --- SQLite test database ---
 _TEST_DB_FILE = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
 _TEST_DB_FILE.close()
@@ -33,12 +38,6 @@ sys.modules["torch"].save = MagicMock()    # type: ignore[attr-defined]
 sys.modules["transformers"].pipeline = MagicMock()  # type: ignore[attr-defined]
 sys.modules["transformers"].AutoTokenizer = MagicMock()  # type: ignore[attr-defined]
 sys.modules["transformers"].AutoModelForSequenceClassification = MagicMock()  # type: ignore[attr-defined]
-
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event as sa_event
-from sqlalchemy.orm import sessionmaker
-
 
 @pytest.fixture()
 def client():

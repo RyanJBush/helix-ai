@@ -1,13 +1,12 @@
-# CI-safe requirements — uses SQLite, no PostgreSQL driver needed
-# psycopg[binary] intentionally omitted: conftest.py sets DATABASE_URL=sqlite:///
-# torch and transformers intentionally omitted: ~2GB, would timeout CI
-# They are mocked via backend/tests/conftest.py sys.modules stubs
-fastapi==0.115.12
-uvicorn[standard]==0.34.2
-sqlalchemy==2.0.40
-alembic==1.15.2
-pydantic-settings==2.8.1
-python-dotenv==1.1.0
-httpx==0.28.1
-websockets==15.0.1
-pytest==8.3.5
+fastapi
+uvicorn[standard]
+pydantic>=2.0
+pydantic-settings
+httpx
+sqlalchemy
+pandas
+numpy
+transformers
+pytest
+pytest-asyncio
+ruff
