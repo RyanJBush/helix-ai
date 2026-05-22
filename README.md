@@ -1,130 +1,105 @@
-# Atlas — Market Sentiment & Trading Intelligence (Educational Simulation)
+# Market Sentiment & Trading Intelligence Dashboard
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-market--sentiment.onrender.com-22c55e?style=for-the-badge)](https://market-sentiment.onrender.com)
+## Executive Summary
+This project is a full-stack **educational analytics platform** that demonstrates how financial news sentiment can be transformed into structured market intelligence workflows. It combines a FastAPI backend, sentiment and signal services, simulation-style backtesting, and a React dashboard for exploring ticker-level insights. The repository is designed as a recruiter-ready portfolio artifact for fintech, data science, analytics, and software engineering conversations.
 
-> **Disclaimer (read first):** Atlas is an education-only portfolio project. It is **not financial advice**, does **not** place real broker orders, and does **not** trade real money.
+## Market Intelligence Problem This Project Solves
+Market commentary is noisy, unstructured, and difficult to operationalize consistently. This project shows an end-to-end approach for:
+- ingesting and normalizing market/news-style records,
+- scoring sentiment with explainable metadata,
+- aggregating ticker-level sentiment into interpretable signals,
+- evaluating those signals in **paper-trade/backtesting simulations** for decision-support analysis.
 
-Atlas demonstrates how market-news sentiment can be transformed into transparent, explainable signals and evaluated in a **paper-trade style simulation** workflow.
+Rather than claiming execution systems, it focuses on transparent analysis pipelines and productized analytics UX.
 
-I built this as a **University of Maryland student studying Information Science and Electrical Engineering with a Business minor**.
-
-## What Atlas demonstrates
-- Sentiment analysis pipeline design from ingestion to ticker-level signal output.
-- Data engineering patterns for structured ingest, normalization, and API-serving.
-- Explainable strategy logic (source weighting, time decay, confidence metadata).
-- Full-stack product communication via FastAPI backend + React/TypeScript UI.
-- Simulation-first framing that avoids claiming broker-connected execution.
-
-## Screenshots
-
-![Atlas Dashboard](docs/images/dashboard.png)
-![Sentiment Time-Series Chart](docs/images/sentiment-chart.png)
-
-## Data Pipeline
-
-```mermaid
-flowchart LR
-    A[News/Twitter API] --> B[NLP Sentiment Scoring]
-    B --> C[Time Series Aggregation]
-    C --> D[Dashboard]
-```
-
-## Data sources and realism
-Atlas includes demo data and demo workflows intended for portfolio evaluation:
-
-- `data/sample_news.json` → **static sample dataset** checked into the repo.
-- `data/sample_prices.csv` → **static sample dataset** checked into the repo.
-- `/api/v1/news/ingest-and-score` → ingests and scores sample/synthetic inputs in local runs.
-- Backtesting + paper-trade endpoints → **simulation outputs**, not real fills or brokerage records.
-
-In short: Atlas analyzes sample or delayed-style inputs for educational simulation, not live production trading.
+## Key Features
+- **News ingestion and scoring workflow** with deterministic/demo-friendly inputs and stored ingestion runs.
+- **Sentiment analysis service** with score, confidence, label, and model metadata.
+- **Ticker aggregation and signal generation** (weighted sentiment + thresholds + rationale).
+- **Trust/explainability APIs** for signal context and explanation outputs.
+- **Backtesting and paper-trade simulation endpoints** for scenario-style evaluation (no brokerage execution).
+- **Replay, streaming, jobs, and briefing routes** to support richer analyst workflows.
+- **React dashboard UI** with pages for dashboard metrics, ticker view, news feed, and signals.
 
 ## Tech Stack
+- **Backend:** Python, FastAPI, Pydantic, SQLAlchemy.
+- **Analytics/NLP:** pandas and NumPy-based processing plus sentiment service logic.
+- **Frontend:** React, TypeScript, Vite, React Router.
+- **Data layer:** SQLite by default (PostgreSQL-compatible via configuration patterns).
+- **Developer tooling:** pytest, ESLint, Docker/Docker Compose, Makefile-driven workflows.
 
-| Component | Technology | Purpose |
-|---|---|---|
-| Backend API | FastAPI, Pydantic, SQLAlchemy | Serve sentiment, watchlist, and backtesting endpoints |
-| NLP & Analytics | Python, pandas, NumPy | Sentiment scoring, aggregation, and trading metrics |
-| Frontend | React, TypeScript, Vite | Interactive dashboard for market intelligence views |
-| Data Storage | SQLite (default), PostgreSQL (optional) | Persist watchlists, sentiment outputs, and simulation state |
-| Quality & CI | pytest, ruff, GitHub Actions | Linting, smoke tests, and continuous integration checks |
+## Data and Sentiment Analysis Workflow
+1. **Ingestion:** News items are ingested and tracked by run metadata.
+2. **Sentiment scoring:** Each item is analyzed for polarity/score/confidence and persisted.
+3. **Aggregation:** Sentiment is rolled up by ticker with lookback windows and weighting.
+4. **Signal generation:** Aggregates are converted into buy/hold/sell-style outputs with rationale and thresholds.
+5. **Simulation analytics:** Backtesting and paper-trade endpoints evaluate signal behavior on historical-style data.
+6. **Delivery:** Results are exposed via API routes and displayed in the frontend pages/components.
 
-## Supported Tickers
-- `AAPL`
-- `TSLA`
-- `MSFT`
-- `SPY`
+> Included sample data (`data/sample_news.json`, `data/sample_prices.csv`) supports local demos and deterministic testing.
 
-## Architecture
-- High-level system view: `docs/architecture.md`
-- API surface: `docs/api.md`
-- Demo narrative/runbook: `docs/demo-runbook.md`
+## Dashboard or Analytics Overview
+The frontend includes route-level experiences for:
+- **Dashboard page:** KPI and sentiment visualization components (including charts/gauges/panels).
+- **Ticker page:** ticker-focused intelligence views.
+- **News page:** feed exploration.
+- **Signals page:** signal outputs and status context.
 
-Core flow: **News → NLP → Signal → Simulation**
+The backend API also provides health/readiness checks plus domain routers for news, sentiment, analytics, signals, backtesting, trust, streaming, replay, briefings, and jobs.
 
-## Run locally
-Clone + install:
+## Setup and Installation
+### Option A: Run with Docker Compose
 ```bash
-git clone https://github.com/RyanJBush/Real-time-market-sentiment-and-trading-intelligence-platform.git
-cd Real-time-market-sentiment-and-trading-intelligence-platform
-cd backend && pip install -r requirements.txt && cd ..
+docker compose up --build
 ```
 
-### 1) Load sample data (demo-only)
+### Option B: Run locally (backend + frontend)
 ```bash
-python backend/scripts/seed_demo.py
+# Backend
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# Frontend (in a second terminal)
+cd frontend
+npm install
+npm run dev
 ```
 
-### 2) Run backend demo API
+### Seed demo data
 ```bash
-bash scripts/run_demo.sh
+cd backend
+NLP_PROVIDER=heuristic PYTHONPATH=. python scripts/seed_demo.py
 ```
 
-### 3) Run UI dashboard (optional)
+### Useful developer commands
 ```bash
-cd frontend && npm ci && npm run dev
+make test-backend
+make lint
+make build-frontend
 ```
 
-## Demo workflow (5-minute walkthrough)
-1. Confirm service readiness (`/health`).
-2. Trigger ingest-and-score for sample news.
-3. Inspect analytics overview and ticker signals.
-4. Run backtesting/paper-trade endpoints as simulation examples.
-5. Reiterate: this project demonstrates engineering and analysis, not live execution.
+## Example Use Cases
+- Build a **fintech case-study demo** showing sentiment-to-signal transformation.
+- Demonstrate **data product engineering** across ingestion, modeling, APIs, and UI.
+- Explore **decision-support workflows** for analyst tooling without live trading execution.
+- Showcase **full-stack collaboration readiness** with typed API contracts and modular services.
 
-See `docs/demo-runbook.md` for the command sequence.
+## Skills Demonstrated
+- Financial NLP workflow design and sentiment scoring integration.
+- API-first backend engineering (routing, schemas, service layers, persistence).
+- Analytics pipeline construction (aggregation, weighting, signal logic, simulation).
+- Frontend analytics UX development (React + TypeScript components and routing).
+- Testing and developer experience practices for reproducible local demos.
 
-## Portfolio Preview and screenshots
-- **Portfolio Preview:** `docs/preview/index.html`
-- Screenshot index and capture guidance: `docs/screenshots/README.md`
-- Existing captures:
-  - `docs/screenshots/01-dashboard.png`
-  - `docs/screenshots/02-news-feed.png`
-  - `docs/screenshots/03-signal-output.png`
-  - `docs/screenshots/04-backtest-result.png`
-  - `docs/screenshots/05-api-docs.png`
+## Resume-Ready Project Description
+Built a full-stack **Market Sentiment & Trading Intelligence Dashboard** that ingests and scores financial/news text, aggregates ticker-level sentiment, generates explainable trading signals, and evaluates strategies through backtesting and paper-trade simulation endpoints. Implemented modular FastAPI services and a React/TypeScript analytics UI to communicate decision-support insights in a recruiter-friendly product format.
 
-## Demo `.env` variables (no real credentials)
-- Backend demo settings: `backend/.env.example`
-- Frontend demo settings: `frontend/.env.example`
+## Future Improvements
+- Integrate clearly-labeled external data adapters with freshness/source provenance metadata.
+- Expand model evaluation instrumentation (drift checks, calibration, benchmarking views).
+- Add richer dashboard filtering/comparison workflows and deeper explainability visualizations.
+- Strengthen productionization patterns (observability, background scheduling, deployment hardening).
 
-These variables are for local simulation and API wiring only. Do not use or store brokerage/API trading credentials in this project.
-
-## Limitations and future work
-### Current limitations
-- Demo datasets are static/sample and do not represent high-frequency market infrastructure.
-- No broker integration or real order-routing is implemented.
-- Outputs are intended for educational analysis and software demonstration.
-
-### Future work
-- Add configurable dataset adapters (clearly labeled by freshness and source).
-- Expand model evaluation and drift-monitoring instrumentation.
-- Improve scenario controls and explainability visualizations in the UI.
-
-## Resume bullets
-- See: `docs/resume-bullets.md`
-
-## License
-This repository is licensed under `LICENSE`.
-
-**Keywords:** sentiment-analysis, nlp, fintech, trading, time-series, fastapi, python, market-data
+## Disclaimer
+This repository is for **educational and analytical purposes only**. It does **not** provide financial advice, does **not** execute real trades, and should not be used as an automated investment system.
