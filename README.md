@@ -1,5 +1,7 @@
 # Atlas — Market Sentiment & Trading Intelligence (Educational Simulation)
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-market--sentiment.onrender.com-22c55e?style=for-the-badge)](https://market-sentiment.onrender.com)
+
 > **Disclaimer (read first):** Atlas is an education-only portfolio project. It is **not financial advice**, does **not** place real broker orders, and does **not** trade real money.
 
 Atlas demonstrates how market-news sentiment can be transformed into transparent, explainable signals and evaluated in a **paper-trade style simulation** workflow.
@@ -13,6 +15,20 @@ I built this as a **University of Maryland student studying Information Science 
 - Full-stack product communication via FastAPI backend + React/TypeScript UI.
 - Simulation-first framing that avoids claiming broker-connected execution.
 
+## Screenshots
+
+![Atlas Dashboard](docs/images/dashboard.png)
+![Sentiment Time-Series Chart](docs/images/sentiment-chart.png)
+
+## Data Pipeline
+
+```mermaid
+flowchart LR
+    A[News/Twitter API] --> B[NLP Sentiment Scoring]
+    B --> C[Time Series Aggregation]
+    C --> D[Dashboard]
+```
+
 ## Data sources and realism
 Atlas includes demo data and demo workflows intended for portfolio evaluation:
 
@@ -23,11 +39,21 @@ Atlas includes demo data and demo workflows intended for portfolio evaluation:
 
 In short: Atlas analyzes sample or delayed-style inputs for educational simulation, not live production trading.
 
-## Tech stack
-- **Backend:** Python, FastAPI, SQLAlchemy, Pydantic, pandas, NumPy
-- **Frontend:** React, TypeScript, Vite
-- **Storage:** SQLite by default; PostgreSQL optional via Docker Compose
-- **Tooling:** pytest, ruff, Makefile tasks, GitHub Actions
+## Tech Stack
+
+| Component | Technology | Purpose |
+|---|---|---|
+| Backend API | FastAPI, Pydantic, SQLAlchemy | Serve sentiment, watchlist, and backtesting endpoints |
+| NLP & Analytics | Python, pandas, NumPy | Sentiment scoring, aggregation, and trading metrics |
+| Frontend | React, TypeScript, Vite | Interactive dashboard for market intelligence views |
+| Data Storage | SQLite (default), PostgreSQL (optional) | Persist watchlists, sentiment outputs, and simulation state |
+| Quality & CI | pytest, ruff, GitHub Actions | Linting, smoke tests, and continuous integration checks |
+
+## Supported Tickers
+- `AAPL`
+- `TSLA`
+- `MSFT`
+- `SPY`
 
 ## Architecture
 - High-level system view: `docs/architecture.md`
@@ -100,3 +126,5 @@ These variables are for local simulation and API wiring only. Do not use or stor
 
 ## License
 This repository is licensed under `LICENSE`.
+
+**Keywords:** sentiment-analysis, nlp, fintech, trading, time-series, fastapi, python, market-data
