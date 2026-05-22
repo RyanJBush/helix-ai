@@ -7,7 +7,13 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.sentiment import SentimentRecord
 from app.models.watchlist import MarketCapSnapshot, Watchlist
-from app.schemas.portfolio import FearGreedResponse, WatchlistCreateRequest, WatchlistResponse, WatchlistSentimentResponse, TickerSentimentBreakdown
+from app.schemas.portfolio import (
+    FearGreedResponse,
+    TickerSentimentBreakdown,
+    WatchlistCreateRequest,
+    WatchlistResponse,
+    WatchlistSentimentResponse,
+)
 from app.services.fear_greed import fear_greed_service
 
 router = APIRouter()

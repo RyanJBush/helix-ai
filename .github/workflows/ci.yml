@@ -8,11 +8,8 @@ on:
 
 jobs:
   backend-ci:
-    name: Python Lint + Smoke Test
+    name: Python Lint + Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
 
     steps:
       - name: Checkout
@@ -28,10 +25,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-ci.txt
+          pip install -r backend/requirements-ci.txt
 
       - name: Ruff lint
         run: ruff check .
 
-      - name: Pytest smoke test
-        run: pytest -q backend/tests/test_health.py
+      - name: Run tests
+        run: pytest backend/tests/ -q --tb=short
